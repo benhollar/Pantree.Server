@@ -1,16 +1,14 @@
 using System;
-using System.Data.Common;
 using System.IO;
 using System.Reflection;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Pantree.Server.Database;
-using Pantree.Server.Database.Providers.Postgres;
-using Pantree.Server.Database.Providers.Sqlite;
+using Pantree.Server.Database.Utilities;
 using Pantree.Server.Filters;
 
 namespace Pantree.Server
@@ -44,59 +42,38 @@ namespace Pantree.Server
                     options.IncludeXmlComments(documentationPath);
             });
 
+            bool warnInMemoryDb = false;
             if (builder.Configuration.GetConnectionString("PostgresContext") is string postgresConnectionString &&
                 postgresConnectionString.Length > 0)
             {
-                builder.Services.AddDbContext<PostgresContext>(options =>
-                    PostgresContext.ConfigureOptions(
-                        options as DbContextOptionsBuilder<PostgresContext> ?? new(),
-                        postgresConnectionString
-                    )
-                );
-                builder.Services.AddScoped<PantreeDataContext, PostgresContext>();
+                ContextRegistration.RegisterPostgresContext(builder.Services, postgresConnectionString);
             }
             else if (builder.Configuration.GetConnectionString("SqliteContext") is string sqliteConnectionString &&
                 sqliteConnectionString.Length > 0)
             {
-                builder.Services.AddDbContext<SqliteContext>(options =>
-                    SqliteContext.ConfigureOptions(
-                        options as DbContextOptionsBuilder<SqliteContext> ?? new(),
-                        sqliteConnectionString
-                    ));
-                builder.Services.AddScoped<PantreeDataContext, SqliteContext>();
+                ContextRegistration.RegisterSqliteContext(builder.Services, sqliteConnectionString);
             }
             else
             {
-                // TODO: Implement proper logging
-                Console.WriteLine(
-                    "A valid connection string was not found for any supported database provider. Update your " +
-                    "appsettings.json to include a valid 'ConnectionStrings' property."
-                );
-                Console.WriteLine(
-                    "Using an in-memory SQLite database as a placeholder; persisted entries will be deleted when the " +
-                    "application stops running."
-                );
-                builder.Services.AddSingleton<DbConnection>(container =>
-                {
-                    DbConnection connection = new SqliteConnection("DataSource=:memory:");
-                    connection.Open();
-
-                    return connection;
-                });
-                builder.Services.AddDbContext<SqliteContext>((container, options) =>
-                {
-                    DbConnection connection = container.GetRequiredService<DbConnection>();
-                    SqliteContext.ConfigureOptions(
-                        options as DbContextOptionsBuilder<SqliteContext> ?? new(), 
-                        connection
-                    );
-                });
-                builder.Services.AddScoped<PantreeDataContext, SqliteContext>();
+                warnInMemoryDb = true;
+                ContextRegistration.RegisterSqliteContext(builder.Services);
             }
 
             builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
             WebApplication app = builder.Build();
+
+            if (warnInMemoryDb)
+            {
+                app.Logger.LogWarning(
+                    "A valid connection string was not found for any supported database provider. Update your " +
+                    "appsettings.json to include a valid 'ConnectionStrings' property."
+                );
+                app.Logger.LogWarning(
+                    "Using an in-memory SQLite database as a placeholder; persisted entries will be deleted when the " +
+                    "application stops running."
+                );
+            }
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

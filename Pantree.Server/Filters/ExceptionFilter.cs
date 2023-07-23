@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.Logging;
 
 namespace Pantree.Server.Filters
 {
@@ -11,6 +12,20 @@ namespace Pantree.Server.Filters
     /// </summary>
     public class ExceptionFilter : IExceptionFilter
     {
+        /// <summary>
+        /// The logger dedicated to this exception filter
+        /// </summary>
+        private readonly ILogger _logger;
+
+        /// <summary>
+        /// Construct a new <see cref="ExceptionFilter"/>
+        /// </summary>
+        /// <param name="logger">The logger for this instance provided via dependency injection</param>
+        public ExceptionFilter(ILogger<ExceptionFilter> logger)
+        {
+            _logger = logger;
+        }
+
         /// <inheritdoc/>
         public void OnException(ExceptionContext context)
         {
@@ -18,6 +33,9 @@ namespace Pantree.Server.Filters
             // so should streamline troubleshooting
             if (Debugger.IsAttached)
                 throw context.Exception;
+            
+            // In all contexts, we can log the exception
+            _logger.LogError(context.Exception, "An unexpected exception occurred.");
 
             context.Result = context.Exception switch
             {

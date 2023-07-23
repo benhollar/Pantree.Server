@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Pantree.Server.Database;
 using Pantree.Server.Database.Providers.Postgres;
 using Pantree.Server.Database.Providers.Sqlite;
+using Pantree.Server.Database.Utilities;
 
 namespace Pantree.Server.Tests
 {
@@ -29,24 +30,8 @@ namespace Pantree.Server.Tests
                         is ServiceDescriptor postgresOptions)
                     services.Remove(postgresOptions);
 
-                // The replacement DB will be an in-memory sqlite database; it must be configured as an open connection
-                // (so EF doesn't discard it, wiping the DB), and using our normal SqliteContext configuration
-                services.AddSingleton<DbConnection>(container =>
-                {
-                    DbConnection connection = new SqliteConnection("DataSource=:memory:");
-                    connection.Open();
-
-                    return connection;
-                });
-                services.AddDbContext<SqliteContext>((container, options) =>
-                {
-                    DbConnection connection = container.GetRequiredService<DbConnection>();
-                    SqliteContext.ConfigureOptions(
-                        options as DbContextOptionsBuilder<SqliteContext> ?? new(), 
-                        connection
-                    );
-                });
-                services.AddScoped<PantreeDataContext, SqliteContext>();
+                // The replacement DB will be an in-memory sqlite database
+                ContextRegistration.RegisterSqliteContext(services);
             });
         }
     }
