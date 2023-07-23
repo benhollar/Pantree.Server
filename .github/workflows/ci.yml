@@ -21,10 +21,13 @@ jobs:
       
       - name: Run Unit Tests With Coverage
         run: |
+          git submodule update --init --recursive
           dotnet test --collect:"XPlat Code Coverage"
           cp Pantree.Server.Tests/TestResults/**/coverage.cobertura.xml testcov.xml
 
       - uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           files: ./testcov.xml
           name: codecov

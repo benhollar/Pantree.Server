@@ -1,7 +1,9 @@
 using System;
+using System.Data.Common;
 using System.IO;
 using System.Reflection;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -65,10 +67,31 @@ namespace Pantree.Server
             }
             else
             {
-                throw new ApplicationException(
+                // TODO: Implement proper logging
+                Console.WriteLine(
                     "A valid connection string was not found for any supported database provider. Update your " +
                     "appsettings.json to include a valid 'ConnectionStrings' property."
                 );
+                Console.WriteLine(
+                    "Using an in-memory SQLite database as a placeholder; persisted entries will be deleted when the " +
+                    "application stops running."
+                );
+                builder.Services.AddSingleton<DbConnection>(container =>
+                {
+                    DbConnection connection = new SqliteConnection("DataSource=:memory:");
+                    connection.Open();
+
+                    return connection;
+                });
+                builder.Services.AddDbContext<SqliteContext>((container, options) =>
+                {
+                    DbConnection connection = container.GetRequiredService<DbConnection>();
+                    SqliteContext.ConfigureOptions(
+                        options as DbContextOptionsBuilder<SqliteContext> ?? new(), 
+                        connection
+                    );
+                });
+                builder.Services.AddScoped<PantreeDataContext, SqliteContext>();
             }
 
             builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());

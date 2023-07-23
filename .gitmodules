@@ -1,0 +1,3 @@
+[submodule "Pantree.Core"]
+	path = Pantree.Core
+	url = https://github.com/benhollar/Pantree.Core

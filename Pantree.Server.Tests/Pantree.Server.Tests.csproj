@@ -29,8 +29,4 @@
     <ProjectReference Include="..\Pantree.Server\Pantree.Server.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="testsettings.json" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
-
 </Project>
