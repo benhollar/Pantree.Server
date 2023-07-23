@@ -1,0 +1,32 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+    
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: "7.0.x"
+      
+      - name: Run Unit Tests With Coverage
+        run: |
+          dotnet test --collect:"XPlat Code Coverage"
+          cp Pantree.Server.Tests/TestResults/**/coverage.cobertura.xml testcov.xml
+
+      - uses: codecov/codecov-action@v3
+        with:
+          files: ./testcov.xml
+          name: codecov
+          fail_ci_if_error: true
+          verbose: true
