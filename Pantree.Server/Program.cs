@@ -33,7 +33,6 @@ namespace Pantree.Server
                 options.ReportApiVersions = true;
                 options.AssumeDefaultVersionWhenUnspecified = true;
             });
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(options =>
             {
@@ -41,6 +40,14 @@ namespace Pantree.Server
                 if (File.Exists(documentationPath))
                     options.IncludeXmlComments(documentationPath);
             });
+            
+            ConnectionSettings connectionSettings = builder.Configuration
+                .GetSection("ConnectionSettings")
+                .Get<ConnectionSettings>() ?? new();
+            builder.Services.AddCors(options => options.AddPolicy($"cors-whitelist", policy =>
+            {
+                policy.WithOrigins(connectionSettings.AllowedCorsOrigins).AllowAnyMethod().AllowAnyHeader();
+            }));
 
             bool warnInMemoryDb = false;
             if (builder.Configuration.GetConnectionString("PostgresContext") is string postgresConnectionString &&
@@ -89,6 +96,8 @@ namespace Pantree.Server
                     context.Database.Migrate();
                 }
             }
+
+            app.UseCors("cors-whitelist");
 
             app.UseHttpsRedirection();
 
