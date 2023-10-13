@@ -1,3 +1,4 @@
+using System;
 using System.Data.Common;
 using System.Linq;
 using Microsoft.AspNetCore.Hosting;
@@ -33,6 +34,11 @@ namespace Pantree.Server.Tests
                 // The replacement DB will be an in-memory sqlite database
                 ContextRegistration.RegisterSqliteContext(services);
             });
+
+            // Set an environment variable indicating that we're in a testing environment; this is used in the core
+            // application to determine if a warning message needs to be emitted (i.e. omitting this results in a
+            // cluttered log output for tests)
+            Environment.SetEnvironmentVariable("PANTREE_TESTING", "true");
         }
     }
 }

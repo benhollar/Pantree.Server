@@ -62,7 +62,10 @@ namespace Pantree.Server
             }
             else
             {
-                warnInMemoryDb = true;
+                // Warn about using in-memory databases, so long as we're not doing unit testing in which such a
+                // configuration is actually the expectation.
+                warnInMemoryDb = (Environment.GetEnvironmentVariable("PANTREE_TESTING") ?? "false")
+                    .ToLowerInvariant() == "false";
                 ContextRegistration.RegisterSqliteContext(builder.Services);
             }
 
