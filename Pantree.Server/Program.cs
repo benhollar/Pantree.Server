@@ -7,6 +7,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Pantree.Core.Cooking;
+using Pantree.Server.Controllers.Search.Providers;
 using Pantree.Server.Database;
 using Pantree.Server.Database.Utilities;
 using Pantree.Server.Filters;
@@ -70,6 +72,15 @@ namespace Pantree.Server
             }
 
             builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
+
+            // Inject FoodData Central search provider
+            builder.Services.Configure<FoodDataCentralProviderOptions>(
+                builder.Configuration.GetSection("FoodDataCentral"));
+            builder.Services.AddScoped<ISearchProvider<Food>, FoodDataCentralProvider>();
+            builder.Services.AddHttpClient<ISearchProvider<Food>, FoodDataCentralProvider>(client =>
+            {
+                client.BaseAddress = new Uri("https://api.nal.usda.gov/fdc/v1/foods/search");
+            });
 
             WebApplication app = builder.Build();
 
