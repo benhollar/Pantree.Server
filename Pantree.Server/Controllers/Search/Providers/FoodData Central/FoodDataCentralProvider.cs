@@ -185,6 +185,8 @@ namespace Pantree.Server.Controllers.Search.Providers
                         case "FIBER, TOTAL DIETARY":
                             baseNutrition.Fiber = adjustedValue;
                             break;
+                        case "TOTAL SUGARS":
+                        case "SUGARS, ADDED":
                         case "SUGARS, TOTAL INCLUDING NLEA":
                             baseNutrition.Sugar = adjustedValue;
                             break;
