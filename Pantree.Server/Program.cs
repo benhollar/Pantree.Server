@@ -29,6 +29,7 @@ namespace Pantree.Server
             builder.Services.AddControllers(options =>
             {
                 options.Filters.Add<ExceptionFilter>();
+                options.Filters.Add<ResponseTimeLoggingFilter>();
             });
             builder.Services.AddApiVersioning(options =>
             {
