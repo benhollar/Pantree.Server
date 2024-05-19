@@ -47,7 +47,7 @@ namespace Pantree.Server.Tests.Controllers.Cooking
             SeedData.SeedFoods(_factory, seededFoods);
 
             // Make the request; depending on the test data, we expect either an error response or matching DTO
-            HttpResponseMessage response = await _client.GetAsync($"/api/foods/{id.ToString()}");
+            HttpResponseMessage response = await _client.GetAsync($"/api/foods/{id}");
             if (expectedFood is null) 
             {
                 // Error is expected; validate the API handles that correctly with a NotFound
@@ -121,7 +121,7 @@ namespace Pantree.Server.Tests.Controllers.Cooking
             SeedData.SeedFoods(_factory, seededFoods);
 
             // Make the request; the correct response depends on if the entity being deleted already existed or not
-            HttpResponseMessage response = await _client.DeleteAsync($"/api/foods/{id.ToString()}");
+            HttpResponseMessage response = await _client.DeleteAsync($"/api/foods/{id}");
 
             // If the entity exists, we expect a successful, empty status code; otherwise we expect NotFound
             bool alreadyExists = seededFoods.SingleOrDefault(food => food.Id.ToString() == id) is not null;
@@ -129,6 +129,30 @@ namespace Pantree.Server.Tests.Controllers.Cooking
                 Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
             else
                 Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        }
+
+        [Theory]
+        [MemberData(nameof(RecipesUsingFoodTestData))]
+        public async void RecipesUsingFoodTest(
+            List<Food> seededFoods,
+            List<Recipe> seededRecipes,
+            string foodId,
+            List<Recipe> expectedResult)
+        {
+            // Seed the database
+            SeedData.SeedFoods(_factory, seededFoods);
+            SeedData.SeedRecipes(_factory, seededRecipes);
+
+            // Make the basic request; we're expecting an "OK" response at all times
+            HttpResponseMessage response = await _client.GetAsync($"/api/foods/{foodId}/recipes");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            // Check the validity of the response
+            List<RecipeDto>? actualRecipes = await response.Content.DeserializeRequestContent<List<RecipeDto>>();
+            CustomAssertions.EqualUnordered(
+                expectedResult.Select(x => x.Id.ToString()),
+                actualRecipes?.Select(x => x.Id)
+            );
         }
 
         public static IEnumerable<object?[]> GetAllTestData()
@@ -303,6 +327,64 @@ namespace Pantree.Server.Tests.Controllers.Cooking
             yield return new object[] { foods, foods[0].Id.ToString() };
             yield return new object[] { foods, foods[2].Id.ToString() };
             yield return new object[] { foods, Guid.NewGuid().ToString() };
+        }
+
+        public static IEnumerable<object[]> RecipesUsingFoodTestData()
+        {
+            List<Recipe> seededRecipes = CookingDataStubs.ThreeDummyRecipes();
+
+            List<Food> recipeFoods = seededRecipes
+                .SelectMany(x => x.Ingredients)
+                .Select(x => x.Food)
+                .Distinct()
+                .ToList();
+            List<Food> seededFoods = new()
+            {
+                recipeFoods.Single(x => x.Name == "Test Food 1"),
+                recipeFoods.Single(x => x.Name == "Test Food 2"),
+                recipeFoods.Single(x => x.Name == "Test Food 3"),
+                new Food("Test Food 4")
+                {
+                    Id = Guid.NewGuid(),
+                    Nutrition = new()
+                    {
+                        Calories = 200
+                    },
+                    Measurement = new(2, FoodUnit.Liter)
+                }
+            };
+
+            yield return new object[] 
+            {
+                seededFoods,
+                seededRecipes,
+                seededFoods[0].Id.ToString(),
+                new List<Recipe>() { seededRecipes[0], seededRecipes[2] }
+            };
+
+            yield return new object[]
+            {
+                seededFoods,
+                seededRecipes,
+                seededFoods[1].Id.ToString(),
+                new List<Recipe>() { seededRecipes[1] }
+            };
+
+            yield return new object[]
+            {
+                seededFoods,
+                seededRecipes,
+                seededFoods[2].Id.ToString(),
+                new List<Recipe>() { seededRecipes[0], seededRecipes[1], seededRecipes[2] }
+            };
+
+            yield return new object[]
+            {
+                seededFoods,
+                seededRecipes,
+                seededFoods[3].Id.ToString(),
+                new List<Recipe>()
+            };
         }
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Pantree.Core.Cooking;
 using Pantree.Server.Database;
@@ -17,12 +18,13 @@ namespace Pantree.Server.Tests.Utilities.Database
             
             foreach (Food food in foods)
             {
-                context.Foods.Add(new(food.Name)
-                {
-                    Id = food.Id,
-                    Nutrition = food.Nutrition,
-                    Measurement = food.Measurement
-                });
+                if (!context.Foods.Select(x => x.Id).Contains(food.Id))
+                    context.Foods.Add(new(food.Name)
+                    {
+                        Id = food.Id,
+                        Nutrition = food.Nutrition,
+                        Measurement = food.Measurement
+                    });
             }
             context.SaveChanges();
         }
@@ -40,11 +42,23 @@ namespace Pantree.Server.Tests.Utilities.Database
                 foreach (Ingredient ingredient in recipe.Ingredients)
                 {
                     if (!foodsById.ContainsKey(ingredient.Food.Id))
-                        foodsById[ingredient.Food.Id] = new FoodEntity(
-                            ingredient.Food.Name,
-                            ingredient.Food.Nutrition ?? new(),
-                            ingredient.Food.Measurement ?? new(1, FoodUnit.Unit)
-                        ) { Id = ingredient.Food.Id };
+                    {
+                        if (context.Foods.Select(x => x.Id).Contains(ingredient.Food.Id))
+                        {
+                            foodsById[ingredient.Food.Id] = context.Foods
+                                .Include(x => x.Ingredients)
+                                .Single(x => x.Id == ingredient.Food.Id);
+                        }
+                        else
+                        {
+                            foodsById[ingredient.Food.Id] = new FoodEntity(
+                                ingredient.Food.Name,
+                                ingredient.Food.Nutrition ?? new(),
+                                ingredient.Food.Measurement ?? new(1, FoodUnit.Unit)
+                            ) { Id = ingredient.Food.Id };
+                        }
+                    }
+                        
                     ingredients.Add(new(foodsById[ingredient.Food.Id], ingredient.Quantity)
                     {
                         Id = ingredient.Id
