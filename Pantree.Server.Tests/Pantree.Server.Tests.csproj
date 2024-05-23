@@ -29,4 +29,10 @@
     <ProjectReference Include="..\Pantree.Server\Pantree.Server.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="Test Data\**">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

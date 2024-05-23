@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -123,7 +124,7 @@ namespace Pantree.Server.Tests.Controllers.Cooking
             SeedData.SeedRecipes(_factory, seededRecipes);
 
             // Make the request; the correct response depends on if the entity being deleted already existed or not
-            HttpResponseMessage response = await _client.DeleteAsync($"/api/Recipes/{id.ToString()}");
+            HttpResponseMessage response = await _client.DeleteAsync($"/api/Recipes/{id}");
 
             // If the entity exists, we expect a successful, empty status code; otherwise we expect NotFound
             bool alreadyExists = seededRecipes.SingleOrDefault(Recipe => Recipe.Id.ToString() == id) is not null;
@@ -131,6 +132,29 @@ namespace Pantree.Server.Tests.Controllers.Cooking
                 Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
             else
                 Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        }
+
+        [Theory]
+        [MemberData(nameof(GetImageTestData))]
+        public async void GetImageTest(List<(Recipe, string?)> seededRecipes, string id, int? expectedBytes, string? expectedContentType)
+        {
+            // Seed the database
+            SeedData.SeedRecipes(_factory, seededRecipes);
+
+            // Make the basic request; we're expecting an "Ok" if the image should exist, and "NoContent" otherwise
+            HttpResponseMessage response = await _client.GetAsync($"/api/Recipes/{id}/image");
+            if (expectedBytes is not null && expectedContentType is not null)
+            {
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                
+                byte[] content = await response.Content.ReadAsByteArrayAsync();
+                Assert.Equal(expectedBytes, content.Length);
+                Assert.Equal(expectedContentType, response.Content.Headers.GetValues("Content-Type").First());
+            }
+            else
+            {
+                Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+            }
         }
 
         public static IEnumerable<object?[]> GetAllTestData()
@@ -227,6 +251,22 @@ namespace Pantree.Server.Tests.Controllers.Cooking
             yield return new object[] { recipes, recipes[0].Id.ToString() };
             yield return new object[] { recipes, recipes[1].Id.ToString() };
             yield return new object[] { recipes, Guid.NewGuid().ToString() };
+        }
+
+        public static IEnumerable<object?[]> GetImageTestData()
+        {
+            List<(Recipe recipe, string? image)> recipes = CookingDataStubs.ThreeDummyRecipes()
+                .Zip(new string?[]
+                {
+                    null,
+                    Path.Join("Test Data", "images", "recipe-sample.jpg"),
+                    Path.Join("Test Data", "images", "recipe-sample.webp")
+                })
+                .ToList();
+
+            yield return new object?[] { recipes, recipes[0].recipe.Id.ToString(), null, null };
+            yield return new object?[] { recipes, recipes[1].recipe.Id.ToString(), 8018, "image/jpeg" };
+            yield return new object?[] { recipes, recipes[2].recipe.Id.ToString(), 10630, "image/webp" };
         }
 
         private static RecipeDto GetExpectedDto(Recipe recipe)

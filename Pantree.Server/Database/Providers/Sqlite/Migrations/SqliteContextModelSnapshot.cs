@@ -68,6 +68,12 @@ namespace Pantree.Server.Database.Providers.Sqlite.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("TEXT");
 
+                    b.Property<byte[]>("ImageBlob")
+                        .HasColumnType("BLOB");
+
+                    b.Property<string>("ImageContentType")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Instructions")
                         .IsRequired()
                         .HasColumnType("TEXT");

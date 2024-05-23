@@ -34,6 +34,19 @@ namespace Pantree.Server.Database.Entities.Cooking
 
         /// <inheritdoc cref="Recipe.CookingTime"/>
         public TimeSpan? CookingTime { get; set; }
+
+        /// <summary>
+        /// The binary data of the recipe's image, if one has been provided
+        /// </summary>
+        // TODO: eventually, I'd expect to replace this with reference to an external URL to find the image (e.g. S3),
+        // as storing images in the database isn't a great long-term idea. But it'll suffice for initial development and
+        // for a minimum-viable-product
+        public byte[]? ImageBlob { get; set; }
+
+        /// <summary>
+        /// The content type of the recipe's image, if one exists
+        /// </summary>
+        public string? ImageContentType { get; set; }
     }
 
     /// <summary>
@@ -48,6 +61,8 @@ namespace Pantree.Server.Database.Entities.Cooking
         public RecipeEntityProfile()
         {
             CreateMap<Recipe, RecipeEntity>()
+                .ForMember(x => x.ImageContentType, opt => opt.Ignore())
+                .ForMember(x => x.ImageBlob, opt => opt.Ignore())
                 .ReverseMap();
         }
     }

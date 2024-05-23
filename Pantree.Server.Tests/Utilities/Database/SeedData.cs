@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Pantree.Core.Cooking;
@@ -29,14 +31,18 @@ namespace Pantree.Server.Tests.Utilities.Database
             context.SaveChanges();
         }
 
-        internal static void SeedRecipes(PantreeWebApplicationFactory factory, List<Recipe> recipes)
-        {    
+        internal static void SeedRecipes(PantreeWebApplicationFactory factory, List<Recipe> recipes) =>
+            SeedRecipes(factory, recipes.Select<Recipe, (Recipe, string?)>(x => (x, null)).ToList());
+
+        internal static void SeedRecipes(
+            PantreeWebApplicationFactory factory, List<(Recipe recipe, string? imagePath)> recipes)
+        {
             Dictionary<Guid, FoodEntity> foodsById = new();
                 
             using IServiceScope scope = factory.Server.Services.CreateScope();
             PantreeDataContext context = scope.ServiceProvider.GetRequiredService<PantreeDataContext>();
             
-            foreach (Recipe recipe in recipes)
+            foreach ((Recipe recipe, string? imagePath) in recipes)
             {
                 List<IngredientEntity> ingredients = new();
                 foreach (Ingredient ingredient in recipe.Ingredients)
@@ -65,6 +71,14 @@ namespace Pantree.Server.Tests.Utilities.Database
                     });
                 }
 
+                byte[]? imageBlob = null;
+                string? imageContentType = null;
+                if (imagePath is not null)
+                {
+                    imageBlob = File.ReadAllBytes(imagePath);
+                    new FileExtensionContentTypeProvider().TryGetContentType(imagePath, out imageContentType);
+                }
+
                 context.Recipes.Add(new RecipeEntity()
                 {
                     Id = recipe.Id,
@@ -74,7 +88,9 @@ namespace Pantree.Server.Tests.Utilities.Database
                     Ingredients = ingredients,
                     Servings = recipe.Servings,
                     PreparationTime = recipe.PreparationTime,
-                    CookingTime = recipe.CookingTime
+                    CookingTime = recipe.CookingTime,
+                    ImageBlob = imageBlob,
+                    ImageContentType = imageContentType
                 });    
             }
 

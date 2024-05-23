@@ -2,38 +2,36 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using Pantree.Server.Database.Providers.Postgres;
+using Pantree.Server.Database.Providers.Sqlite;
 
 #nullable disable
 
-namespace Pantree.Server.Database.Providers.Postgres.Migrations
+namespace Pantree.Server.Database.Providers.Sqlite.Migrations
 {
-    [DbContext(typeof(PostgresContext))]
-    partial class PostgresContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(SqliteContext))]
+    [Migration("20240523003306_RecipeImage")]
+    partial class RecipeImage
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder
-                .HasAnnotation("ProductVersion", "7.0.9")
-                .HasAnnotation("Relational:MaxIdentifierLength", 63);
-
-            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+            modelBuilder.HasAnnotation("ProductVersion", "7.0.9");
 
             modelBuilder.Entity("Pantree.Server.Database.Entities.Cooking.FoodEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Nutrition")
-                        .HasColumnType("text");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -44,13 +42,13 @@ namespace Pantree.Server.Database.Providers.Postgres.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("TEXT");
 
                     b.Property<Guid>("FoodId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("TEXT");
 
                     b.Property<Guid?>("RecipeEntityId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -65,33 +63,33 @@ namespace Pantree.Server.Database.Providers.Postgres.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("TEXT");
 
                     b.Property<TimeSpan?>("CookingTime")
-                        .HasColumnType("interval");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
-                        .HasColumnType("text");
+                        .HasColumnType("TEXT");
 
                     b.Property<byte[]>("ImageBlob")
-                        .HasColumnType("bytea");
+                        .HasColumnType("BLOB");
 
                     b.Property<string>("ImageContentType")
-                        .HasColumnType("text");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Instructions")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("TEXT");
 
                     b.Property<TimeSpan?>("PreparationTime")
-                        .HasColumnType("interval");
+                        .HasColumnType("TEXT");
 
-                    b.Property<long>("Servings")
-                        .HasColumnType("bigint");
+                    b.Property<uint>("Servings")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
@@ -103,13 +101,13 @@ namespace Pantree.Server.Database.Providers.Postgres.Migrations
                     b.OwnsOne("Pantree.Server.Database.Entities.Cooking.FoodEntity.Measurement#Measurement", "Measurement", b1 =>
                         {
                             b1.Property<Guid>("FoodEntityId")
-                                .HasColumnType("uuid");
+                                .HasColumnType("TEXT");
 
                             b1.Property<int>("Unit")
-                                .HasColumnType("integer");
+                                .HasColumnType("INTEGER");
 
                             b1.Property<double>("Value")
-                                .HasColumnType("double precision");
+                                .HasColumnType("REAL");
 
                             b1.HasKey("FoodEntityId");
 
@@ -138,13 +136,13 @@ namespace Pantree.Server.Database.Providers.Postgres.Migrations
                     b.OwnsOne("Pantree.Core.Utilities.Measurement.Measurement<Pantree.Core.Cooking.FoodUnit>", "Quantity", b1 =>
                         {
                             b1.Property<Guid>("IngredientEntityId")
-                                .HasColumnType("uuid");
+                                .HasColumnType("TEXT");
 
                             b1.Property<int>("Unit")
-                                .HasColumnType("integer");
+                                .HasColumnType("INTEGER");
 
                             b1.Property<double>("Value")
-                                .HasColumnType("double precision");
+                                .HasColumnType("REAL");
 
                             b1.HasKey("IngredientEntityId");
 

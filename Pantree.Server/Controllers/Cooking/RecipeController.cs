@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -18,7 +20,7 @@ namespace Pantree.Server.Controllers.Cooking
     /// An API controller for <see cref="Recipe"/> entities
     /// </summary>
     [ApiVersion("1.0")]
-    public class RecipesController : BaseCollectionController<Recipe, RecipeEntity, RecipeDto>
+    public partial class RecipesController : BaseCollectionController<Recipe, RecipeEntity, RecipeDto>
     {
         /// <summary>
         /// Construct a new <see cref="RecipesController"/>
@@ -68,6 +70,54 @@ namespace Pantree.Server.Controllers.Cooking
                     _context.Entry(food).State = EntityState.Modified;
                 }
             }
+        }
+    }
+
+    public partial class RecipesController
+    {
+        [HttpGet("{id}/image")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetImage(string id)
+        {
+            if (!Guid.TryParse(id, out Guid guid))
+                return BadRequest("The provided ID is not a valid GUID.");
+            if (Collection.Where(model => model.Id == guid).SingleOrDefault() is not RecipeEntity existing)
+                return NotFound("An recipe with the provided ID does not exist.");
+
+            await LoadSingleAsync(existing);
+
+            if (existing.ImageBlob is not null && existing.ImageContentType is not null)
+                return new FileContentResult(existing.ImageBlob, existing.ImageContentType);
+            else
+                return NoContent();
+        }
+
+        [HttpPost("{id}/image")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> SetImage(string id, IFormFile image)
+        {
+            if (!Guid.TryParse(id, out Guid guid))
+                return BadRequest("The provided ID is not a valid GUID.");
+            if (Collection.Where(model => model.Id == guid).SingleOrDefault() is not RecipeEntity existing)
+                return NotFound("An recipe with the provided ID does not exist.");
+
+            Task<RecipeEntity> recipeLoading = LoadSingleAsync(existing);
+
+            using MemoryStream imageStream = new();
+            Task imageCopying = image.CopyToAsync(imageStream);
+
+            await Task.WhenAll(recipeLoading, imageCopying);
+
+            existing.ImageBlob = imageStream.ToArray();
+            existing.ImageContentType = image.ContentType;
+
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
     }
 
