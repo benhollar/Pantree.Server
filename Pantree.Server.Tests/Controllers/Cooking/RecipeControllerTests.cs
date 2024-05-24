@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.StaticFiles;
 using Pantree.Core.Cooking;
 using Pantree.Server.Models.Cooking;
 using Pantree.Server.Tests.Utilities;
@@ -157,6 +158,41 @@ namespace Pantree.Server.Tests.Controllers.Cooking
             }
         }
 
+        [Theory]
+        [MemberData(nameof(SetImageTestData))]
+        public async void SetImageTest(List<Recipe> seededRecipes, string id, string imagePath)
+        {
+            // Seed the database
+            SeedData.SeedRecipes(_factory, seededRecipes);
+
+            // Prepare the request content; for this endpoint, that means a form with an "image" field containing the
+            // binary data and correctly labeled with the content type
+            MultipartFormDataContent formContent = new();
+            ByteArrayContent content = new(File.ReadAllBytes(imagePath));
+            if (new FileExtensionContentTypeProvider().TryGetContentType(imagePath, out string? contentType))
+                content.Headers.ContentType = new(contentType);
+            formContent.Add(content, "image", "image");
+
+            // Make the basic request; we're expecting a "NoContent" result
+            HttpResponseMessage response = await _client.PostAsync($"/api/Recipes/{id}/image", formContent);
+            Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        }
+        
+        [Theory]
+        [MemberData(nameof(DeleteImageTestData))]
+        public async void DeleteImageTest(List<(Recipe, string?)> seededRecipes, string id, bool expectError)
+        {
+            // Seed the database
+            SeedData.SeedRecipes(_factory, seededRecipes);
+
+            // Make the basic request; we're expecting a "NoContent" if the image should exist, and "BadRequest" otherwise
+            HttpResponseMessage response = await _client.DeleteAsync($"/api/Recipes/{id}/image");
+            if (expectError)
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            else
+                Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        }
+
         public static IEnumerable<object?[]> GetAllTestData()
         {
             List<Recipe> recipes = CookingDataStubs.ThreeDummyRecipes();
@@ -267,6 +303,32 @@ namespace Pantree.Server.Tests.Controllers.Cooking
             yield return new object?[] { recipes, recipes[0].recipe.Id.ToString(), null, null };
             yield return new object?[] { recipes, recipes[1].recipe.Id.ToString(), 8018, "image/jpeg" };
             yield return new object?[] { recipes, recipes[2].recipe.Id.ToString(), 10630, "image/webp" };
+        }
+
+        public static IEnumerable<object?[]> SetImageTestData()
+        {
+            List<Recipe> recipes = CookingDataStubs.ThreeDummyRecipes();
+            string testJpeg = Path.Join("Test Data", "images", "recipe-sample.jpg");
+            string testWebp = Path.Join("Test Data", "images", "recipe-sample.webp");
+
+            yield return new object[] { recipes, recipes[0].Id.ToString(), testJpeg };
+            yield return new object[] { recipes, recipes[0].Id.ToString(), testWebp };
+        }
+
+        public static IEnumerable<object?[]> DeleteImageTestData()
+        {
+            List<(Recipe recipe, string? image)> recipes = CookingDataStubs.ThreeDummyRecipes()
+                .Zip(new string?[]
+                {
+                    null,
+                    Path.Join("Test Data", "images", "recipe-sample.jpg"),
+                    Path.Join("Test Data", "images", "recipe-sample.webp")
+                })
+                .ToList();
+
+            yield return new object?[] { recipes, recipes[0].recipe.Id.ToString(), true };
+            yield return new object?[] { recipes, recipes[1].recipe.Id.ToString(), false };
+            yield return new object?[] { recipes, recipes[2].recipe.Id.ToString(), false };
         }
 
         private static RecipeDto GetExpectedDto(Recipe recipe)

@@ -75,6 +75,17 @@ namespace Pantree.Server.Controllers.Cooking
 
     public partial class RecipesController
     {
+        /// <summary>
+        /// Retrieve the image associated with the recipe identified by <paramref name="id"/>
+        /// </summary>
+        /// <param name="id">
+        /// The unique identifier, expected to be a valid <see cref="Guid"/>, identifying the <see cref="Recipe"/> whose
+        /// image should be retrieved
+        /// </param>
+        /// <returns>
+        /// A <see cref="FileContentResult"/> (OK) containing the binary file data if it is found, and a
+        /// <see cref="NoContentResult"/> if no image is stored for the recipe
+        /// </returns>
         [HttpGet("{id}/image")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -85,7 +96,7 @@ namespace Pantree.Server.Controllers.Cooking
             if (!Guid.TryParse(id, out Guid guid))
                 return BadRequest("The provided ID is not a valid GUID.");
             if (Collection.Where(model => model.Id == guid).SingleOrDefault() is not RecipeEntity existing)
-                return NotFound("An recipe with the provided ID does not exist.");
+                return NotFound("A recipe with the provided ID does not exist.");
 
             await LoadSingleAsync(existing);
 
@@ -95,6 +106,18 @@ namespace Pantree.Server.Controllers.Cooking
                 return NoContent();
         }
 
+        /// <summary>
+        /// Set the image representing the recipe identified by <paramref name="id"/>
+        /// </summary>
+        /// <param name="id">
+        /// The unique identifier, expected to be a valid <see cref="Guid"/>, identifying the <see cref="Recipe"/> whose
+        /// image should be set
+        /// </param>
+        /// <param name="image">
+        /// The file data, encoded in a multipart form containing an "image" field containing the image's binary data
+        /// and a header specifying the content type
+        /// </param>
+        /// <returns>A <see cref="NoContentResult"/> if the image is successfully saved</returns>
         [HttpPost("{id}/image")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -104,7 +127,7 @@ namespace Pantree.Server.Controllers.Cooking
             if (!Guid.TryParse(id, out Guid guid))
                 return BadRequest("The provided ID is not a valid GUID.");
             if (Collection.Where(model => model.Id == guid).SingleOrDefault() is not RecipeEntity existing)
-                return NotFound("An recipe with the provided ID does not exist.");
+                return NotFound("A recipe with the provided ID does not exist.");
 
             Task<RecipeEntity> recipeLoading = LoadSingleAsync(existing);
 
@@ -115,6 +138,37 @@ namespace Pantree.Server.Controllers.Cooking
 
             existing.ImageBlob = imageStream.ToArray();
             existing.ImageContentType = image.ContentType;
+
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Delete the image representing the recipe identified by <paramref name="id"/>
+        /// </summary>
+        /// <param name="id">
+        /// The unique identifier, expected to be a valid <see cref="Guid"/>, identifying the <see cref="Recipe"/> whose
+        /// image should be deleted
+        /// </param>
+        /// <returns>A <see cref="NoContentResult"/> if an image existed and was successfully deleted</returns>
+        [HttpDelete("{id}/image")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteImage(string id)
+        {
+            if (!Guid.TryParse(id, out Guid guid))
+                return BadRequest("The provided ID is not a valid GUID.");
+            if (Collection.Where(model => model.Id == guid).SingleOrDefault() is not RecipeEntity existing)
+                return NotFound("A recipe with the provided ID does not exist.");
+
+            await LoadSingleAsync(existing);
+
+            if (existing.ImageBlob is null && existing.ImageContentType is null)
+                return BadRequest("The recipe does not have an image to delete.");
+            
+            existing.ImageBlob = null;
+            existing.ImageContentType = null;
 
             await _context.SaveChangesAsync();
             return NoContent();
