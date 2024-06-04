@@ -45,7 +45,7 @@ namespace Pantree.Server.Models.Cooking
             if (Id is not null && !Guid.TryParse(Id, out _))
                 errorMessages = errorMessages.CreateOrAdd("The ID provided is not a valid GUID.");
 
-            if (!Measurement.Validate(out List<string>? measurementErrors))
+            if (Measurement is not null && !Measurement.Validate(out List<string>? measurementErrors))
                 errorMessages = errorMessages.CreateOrAddRange(measurementErrors);
 
             return errorMessages is null;
