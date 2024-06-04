@@ -22,7 +22,7 @@ jobs:
       - name: Run Unit Tests With Coverage
         run: |
           git submodule update --init --recursive
-          dotnet test --collect:"XPlat Code Coverage"
+          dotnet test --collect:"XPlat Code Coverage" --settings Pantree.Server.Tests/coverlet.runsettings
           cp Pantree.Server.Tests/TestResults/**/coverage.cobertura.xml testcov.xml
 
       - uses: codecov/codecov-action@v4
