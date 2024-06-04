@@ -124,8 +124,10 @@ namespace Pantree.Server.Models.Cooking
             hashCode.Add(Id);
             hashCode.Add(Name);
             hashCode.Add(Description);
-            hashCode.Add(Instructions);
-            hashCode.Add(Ingredients);
+            foreach (string instruction in Instructions)
+                hashCode.Add(instruction);
+            foreach (IngredientDto ingredient in Ingredients.OrderBy(x => x.Id))
+                hashCode.Add(ingredient);
             hashCode.Add(Servings);
             hashCode.Add(PreparationTime);
             hashCode.Add(CookingTime);
@@ -166,7 +168,7 @@ namespace Pantree.Server.Models.Cooking
         /// </summary>
         /// <param name="timespan">An optional timespan to get the minute duration of</param>
         /// <returns>The number of minutes, if given</returns>
-        private uint? GetMinutesFromTimeSpan(TimeSpan? timespan) => (uint?)timespan?.Minutes;
+        private uint? GetMinutesFromTimeSpan(TimeSpan? timespan) => (uint?)timespan?.TotalMinutes;
 
         /// <summary>
         /// Get a <see cref="TimeSpan"/> from a number of minutes, returning null if no minutes are given

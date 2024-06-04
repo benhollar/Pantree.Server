@@ -23,7 +23,7 @@ namespace Pantree.Server.Models.Cooking
         public Nutrition? Nutrition { get; set; }
 
         /// <inheritdoc cref="Food.Measurement"/>
-        public FoodMeasurementDto Measurement { get; set; } = new();
+        public FoodMeasurementDto? Measurement { get; set; }
 
         /// <inheritdoc/>
         /// <remarks>

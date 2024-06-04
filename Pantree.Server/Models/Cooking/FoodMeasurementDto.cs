@@ -65,6 +65,9 @@ namespace Pantree.Server.Models.Cooking
                 .ForMember(measurement => measurement.Unit,
                            opt => opt.MapFrom(measurement => measurement.Unit.GetFriendlyName()))
                 .ReverseMap();
+
+            // Required for the reverse map
+            CreateMap<string, FoodUnit>().ConvertUsing(unit => FoodUnitExtensions.FromFriendlyName(unit));
         }
     }
 
@@ -81,7 +84,22 @@ namespace Pantree.Server.Models.Cooking
         public static string GetFriendlyName(this FoodUnit unit) => unit switch
         {
             FoodUnit.FluidOunce => "fluid ounce",
-            _ => Enum.GetName<FoodUnit>(unit)!.ToLowerInvariant()
+            _ => Enum.GetName(unit)!.ToLowerInvariant()
         };
+
+        /// <summary>
+        /// Get the <see cref="FoodUnit"/> matching the <paramref name="friendlyName"/> provided
+        /// </summary>
+        /// <param name="friendlyName">
+        /// A user-friendly name for a unit, typically produced by <see cref="GetFriendlyName"/>
+        /// </param>
+        /// <returns>The matching <see cref="FoodUnit"/> </returns>
+        public static FoodUnit FromFriendlyName(string friendlyName)
+        {
+            Dictionary<string, FoodUnit> mapping = Enum.GetValues<FoodUnit>()
+                .ToDictionary(x => x.GetFriendlyName(), x => x);
+
+            return mapping[friendlyName];
+        }
     }
 }
