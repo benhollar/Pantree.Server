@@ -62,12 +62,11 @@ namespace Pantree.Server.Controllers.Cooking
                 }
 
                 // If the food referenced by the ingredient already existed -- which we generally expect -- we need to
-                // explicitly replace the old food with the new one.
+                // explicitly tell EF that the existing food is being modified
                 FoodEntity food = ingredient.Food;
                 if (await _context.Foods.SingleOrDefaultAsync(entity => entity.Id == food.Id) is FoodEntity existing)
                 {
-                    _context.Entry(existing).State = EntityState.Detached;
-                    _context.Entry(food).State = EntityState.Modified;
+                    _context.Entry(existing).State = EntityState.Modified;
                 }
             }
         }
