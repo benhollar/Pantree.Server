@@ -52,7 +52,7 @@ namespace Pantree.Server.Database.Utilities
                 //  We must first compose an open DbConnection that will stay open for the lifetime of the application;
                 //  this ensures that Entity Framework won't close the connection, which would destroy the in-memory
                 //  database prematurely.
-                services.AddSingleton<DbConnection>(container =>
+                services.AddSingleton(container =>
                 {
                     DbConnection connection = new SqliteConnection("DataSource=:memory:");
                     connection.Open();

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.StaticFiles;
 using Pantree.Core.Cooking;
 using Pantree.Server.Models.Cooking;
@@ -27,7 +28,7 @@ namespace Pantree.Server.Tests.Controllers.Cooking
 
         [Theory]
         [MemberData(nameof(GetAllTestData))]
-        public async void GetAllTest(List<Recipe> seededRecipes, List<RecipeDto> expectedRecipes)
+        public async Task GetAllTest(List<Recipe> seededRecipes, List<RecipeDto> expectedRecipes)
         {
             // Seed the database
             SeedData.SeedRecipes(_factory, seededRecipes);
@@ -43,7 +44,7 @@ namespace Pantree.Server.Tests.Controllers.Cooking
 
         [Theory]
         [MemberData(nameof(GetSingleTestData))]
-        public async void GetSingleTest(List<Recipe> seededRecipes, Guid id, RecipeDto? expectedRecipe)
+        public async Task GetSingleTest(List<Recipe> seededRecipes, Guid id, RecipeDto? expectedRecipe)
         {
             // Seed the database
             SeedData.SeedRecipes(_factory, seededRecipes);
@@ -66,7 +67,7 @@ namespace Pantree.Server.Tests.Controllers.Cooking
 
         [Theory]
         [MemberData(nameof(AddOrEditTestData))]
-        public async void AddOrEditTest(List<Recipe> seededRecipes, RecipeDto newModel)
+        public async Task AddOrEditTest(List<Recipe> seededRecipes, RecipeDto newModel)
         {
             // Seed the database
             SeedData.SeedRecipes(_factory, seededRecipes);
@@ -98,7 +99,7 @@ namespace Pantree.Server.Tests.Controllers.Cooking
 
         [Theory]
         [MemberData(nameof(AddOrEditTestData))]
-        public async void EditTest(List<Recipe> seededRecipes, RecipeDto changedModel)
+        public async Task EditTest(List<Recipe> seededRecipes, RecipeDto changedModel)
         {
             // Seed the database
             SeedData.SeedRecipes(_factory, seededRecipes);
@@ -119,7 +120,7 @@ namespace Pantree.Server.Tests.Controllers.Cooking
 
         [Theory]
         [MemberData(nameof(DeleteTestData))]
-        public async void DeleteTest(List<Recipe> seededRecipes, string id)
+        public async Task DeleteTest(List<Recipe> seededRecipes, string id)
         {
             // Seed the database
             SeedData.SeedRecipes(_factory, seededRecipes);
@@ -137,7 +138,7 @@ namespace Pantree.Server.Tests.Controllers.Cooking
 
         [Theory]
         [MemberData(nameof(GetImageTestData))]
-        public async void GetImageTest(List<(Recipe, string?)> seededRecipes, string id, int? expectedBytes, string? expectedContentType)
+        public async Task GetImageTest(List<(Recipe, string?)> seededRecipes, string id, int? expectedBytes, string? expectedContentType)
         {
             // Seed the database
             SeedData.SeedRecipes(_factory, seededRecipes);
@@ -160,7 +161,7 @@ namespace Pantree.Server.Tests.Controllers.Cooking
 
         [Theory]
         [MemberData(nameof(SetImageTestData))]
-        public async void SetImageTest(List<Recipe> seededRecipes, string id, string imagePath)
+        public async Task SetImageTest(List<Recipe> seededRecipes, string id, string imagePath)
         {
             // Seed the database
             SeedData.SeedRecipes(_factory, seededRecipes);
@@ -180,7 +181,7 @@ namespace Pantree.Server.Tests.Controllers.Cooking
         
         [Theory]
         [MemberData(nameof(DeleteImageTestData))]
-        public async void DeleteImageTest(List<(Recipe, string?)> seededRecipes, string id, bool expectError)
+        public async Task DeleteImageTest(List<(Recipe, string?)> seededRecipes, string id, bool expectError)
         {
             // Seed the database
             SeedData.SeedRecipes(_factory, seededRecipes);

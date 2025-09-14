@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using Pantree.Server.Models.Cooking;
 using Pantree.Server.Tests.Utilities;
 using Xunit;
@@ -45,7 +46,7 @@ namespace Pantree.Server.Tests.Controllers.Search
         /// <param name="expectedFoods">Our expected search result</param>
         [Theory]
         [MemberData(nameof(SearchFoodsFdcTestData))]
-        public async void SearchFoodsFdcTest(string query, FoodDto[] expectedFoods)
+        public async Task SearchFoodsFdcTest(string query, FoodDto[] expectedFoods)
         {
             // Make the request; we always expect an OK response
             HttpResponseMessage response = await _client.GetAsync($"/api/search/foods/{query}");

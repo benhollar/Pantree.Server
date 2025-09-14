@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Threading.Tasks;
 using Pantree.Core.Cooking;
 using Pantree.Server.Models.Cooking;
 using Pantree.Server.Tests.Utilities;
@@ -25,7 +26,7 @@ namespace Pantree.Server.Tests.Controllers.Cooking
 
         [Theory]
         [MemberData(nameof(GetAllTestData))]
-        public async void GetAllTest(List<Food> seededFoods, List<FoodDto> expectedFoods)
+        public async Task GetAllTest(List<Food> seededFoods, List<FoodDto> expectedFoods)
         {
             // Seed the database
             SeedData.SeedFoods(_factory, seededFoods);
@@ -41,7 +42,7 @@ namespace Pantree.Server.Tests.Controllers.Cooking
 
         [Theory]
         [MemberData(nameof(GetSingleTestData))]
-        public async void GetSingleTest(List<Food> seededFoods, Guid id, FoodDto? expectedFood)
+        public async Task GetSingleTest(List<Food> seededFoods, Guid id, FoodDto? expectedFood)
         {
             // Seed the database
             SeedData.SeedFoods(_factory, seededFoods);
@@ -64,7 +65,7 @@ namespace Pantree.Server.Tests.Controllers.Cooking
 
         [Theory]
         [MemberData(nameof(AddOrEditTestData))]
-        public async void AddOrEditTest(List<Food> seededFoods, FoodDto newModel)
+        public async Task AddOrEditTest(List<Food> seededFoods, FoodDto newModel)
         {
             // Seed the database
             SeedData.SeedFoods(_factory, seededFoods);
@@ -95,7 +96,7 @@ namespace Pantree.Server.Tests.Controllers.Cooking
 
         [Theory]
         [MemberData(nameof(AddOrEditTestData))]
-        public async void EditTest(List<Food> seededFoods, FoodDto changedModel)
+        public async Task EditTest(List<Food> seededFoods, FoodDto changedModel)
         {
             // Seed the database
             SeedData.SeedFoods(_factory, seededFoods);
@@ -115,7 +116,7 @@ namespace Pantree.Server.Tests.Controllers.Cooking
 
         [Theory]
         [MemberData(nameof(DeleteTestData))]
-        public async void DeleteTest(List<Food> seededFoods, string id)
+        public async Task DeleteTest(List<Food> seededFoods, string id)
         {
             // Seed the database
             SeedData.SeedFoods(_factory, seededFoods);
@@ -133,7 +134,7 @@ namespace Pantree.Server.Tests.Controllers.Cooking
 
         [Theory]
         [MemberData(nameof(RecipesUsingFoodTestData))]
-        public async void RecipesUsingFoodTest(
+        public async Task RecipesUsingFoodTest(
             List<Food> seededFoods,
             List<Recipe> seededRecipes,
             string foodId,
