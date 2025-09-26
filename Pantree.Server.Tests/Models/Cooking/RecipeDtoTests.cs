@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using AutoMapper;
+using Microsoft.Extensions.Logging;
 using Pantree.Core.Cooking;
 using Pantree.Server.Models.Cooking;
 using Xunit;
@@ -17,7 +18,7 @@ namespace Pantree.Server.Tests.Controllers.Cooking
             MapperConfiguration mapperConfig = new(cfg =>
             {
                 cfg.AddMaps(Assembly.GetAssembly(typeof(RecipeDto)));
-            });
+            }, new LoggerFactory());
             _mapper = mapperConfig.CreateMapper();
         }
 

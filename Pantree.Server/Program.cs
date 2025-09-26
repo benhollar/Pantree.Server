@@ -72,7 +72,13 @@ namespace Pantree.Server
                 ContextRegistration.RegisterSqliteContext(builder.Services);
             }
 
-            builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
+            AutoMapperSettings autoMapperSettings = builder.Configuration
+                .GetSection("AutoMapper")
+                .Get<AutoMapperSettings>() ?? new();
+            builder.Services.AddAutoMapper(cfg =>
+            {
+                cfg.LicenseKey = autoMapperSettings.LicenseKey;
+            }, Assembly.GetExecutingAssembly());
 
             // Inject FoodData Central search provider
             builder.Services.Configure<FoodDataCentralProviderOptions>(

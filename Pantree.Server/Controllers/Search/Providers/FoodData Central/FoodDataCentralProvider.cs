@@ -69,8 +69,8 @@ namespace Pantree.Server.Controllers.Search.Providers
         public async Task<Food[]> Search(string query, uint numResults = 25, uint pageNumber = 1)
         {
             string queryUrl = BuildQueryUrl(query, numResults, pageNumber);
-            FdcSearchResult result = await MakeRequest(queryUrl);
-            return ConvertFoodsToPantree(result.Foods ?? Array.Empty<FdcFood>());
+            FdcSearchResult? result = await MakeRequest(queryUrl);
+            return ConvertFoodsToPantree(result?.Foods ?? Array.Empty<FdcFood>());
         }
 
         /// <summary>
@@ -105,7 +105,7 @@ namespace Pantree.Server.Controllers.Search.Providers
         /// <param name="queryUrl">The full query URL, including parameters</param>
         /// <returns>The <see cref="FdcSearchResult"/></returns>
         /// <exception cref="ArgumentException">Thrown when the query does not return a valid response</exception>
-        private async Task<FdcSearchResult> MakeRequest(string queryUrl)
+        private async Task<FdcSearchResult?> MakeRequest(string queryUrl)
         {
             HttpResponseMessage response = await _httpClient.GetAsync(queryUrl);
             string rawJson = await response.Content.ReadAsStringAsync();
@@ -114,8 +114,9 @@ namespace Pantree.Server.Controllers.Search.Providers
             {
                 PropertyNameCaseInsensitive = true
             };
-            FdcSearchResult result = JsonSerializer.Deserialize<FdcSearchResult>(rawJson, jsonOptions)
-                ?? throw new ArgumentException($"The query to `{queryUrl}` failed to return valid results.");
+            FdcSearchResult? result = JsonSerializer.Deserialize<FdcSearchResult>(rawJson, jsonOptions);
+            if (result is null || result.Foods is null)
+                _logger.LogWarning("The query to `{}` failed to return valid results. Response was:\n\n{}", queryUrl, rawJson);
 
             return result;
         }
